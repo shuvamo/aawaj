@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aawaj: Free Text to Speech with Natural AI Voices</title>
+<meta property="og:title" content="Aawaj: Free Text to Speech">
+<meta name="description" content="Aawaj turns text into natural-sounding speech for free. High-quality AI voices that run in your browser. No signup, no limits, download as WAV.">
+<style>
+:root{--bg:#eceef7;--card:#fff;--ink:#181c3a;--mute:#5d6384;--line:#d5d9ec;--accent:#4a3fe0;--accent-ink:#fff;--err:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#12142a;--card:#1b1e3b;--ink:#eceefb;--mute:#a1a7cc;--line:#2e3260;--accent:#8c84ff;--accent-ink:#12142a;--err:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 64px}
+.brand{font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin-bottom:28px;display:flex;align-items:baseline;gap:10px}
+.brand small{font-weight:500;font-size:.95rem;color:var(--mute)}
+h1{font-size:clamp(2rem,6vw,3.2rem);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+.lead{color:var(--mute);margin:0 0 28px;max-width:56ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px}
+textarea{width:100%;min-height:190px;resize:vertical;padding:14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font:inherit}
+select,input[type=range]{width:100%}
+select{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit;font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media (max-width:560px){.row{grid-template-columns:1fr}}
+.meta{display:flex;justify-content:space-between;color:var(--mute);font-size:.85rem;margin-top:6px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:13px 22px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:16px;display:none}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+#status{min-height:1.5em;margin-top:12px;color:var(--mute);font-size:.95rem}
+#status.err{color:var(--err)}
+#out{display:none;margin-top:18px}
+audio{width:100%;margin-bottom:12px}
+.ad{margin:28px 0;text-align:center}
+section.info{margin-top:36px;color:var(--mute);font-size:.95rem}
+section.info h2{color:var(--ink);font-size:1.15rem;margin:22px 0 6px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">Aawaj <small>आवाज</small></div>
+  <h1>Free text to speech with natural AI voices</h1>
+  <p class="lead">Paste your script, pick a voice, and download the audio. It runs in your browser, so there’s no signup and no character limit per day.</p>
+
+  <div class="card">
+    <label for="text">Your text</label>
+    <textarea id="text" maxlength="10000" placeholder="Type or paste your script here…">Welcome to the channel. In this video, we’re going to explore something that most people never think about.</textarea>
+    <div class="meta"><span id="count">0 / 10000</span><span>English voices</span></div>
+
+    <div class="row">
+      <div>
+        <label for="voice">Voice</label>
+        <select id="voice">
+          <optgroup label="American, female">
+            <option value="af_heart" selected>Heart (warm)</option>
+            <option value="af_bella">Bella</option>
+            <option value="af_nicole">Nicole (soft)</option>
+            <option value="af_sarah">Sarah</option>
+            <option value="af_sky">Sky</option>
+          </optgroup>
+          <optgroup label="American, male">
+            <option value="am_adam">Adam</option>
+            <option value="am_michael">Michael</option>
+          </optgroup>
+          <optgroup label="British, female">
+            <option value="bf_emma">Emma</option>
+            <option value="bf_isabella">Isabella</option>
+          </optgroup>
+          <optgroup label="British, male">
+            <option value="bm_george">George</option>
+            <option value="bm_lewis">Lewis</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label for="speed">Speed: <span id="speedVal">1.0</span>×</label>
+        <input id="speed" type="range" min="0.6" max="1.4" step="0.05" value="1">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="go">Generate speech</button>
+      <button id="stop" class="ghost" hidden>Cancel</button>
+    </div>
+    <div class="bar" id="bar"><i id="fill"></i></div>
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <div id="out">
+      <audio id="player" controls></audio>
+      <a id="dl" download="speech.wav"><button type="button" class="ghost">Download WAV</button></a>
+    </div>
+  </div>
+
+  <!-- Ad slot: paste your ad network code here -->
+  <div class="ad" id="ad-slot"></div>
+
+  <section class="info">
+    <h2>What is Aawaj?</h2>
+    <p>Aawaj means “voice” in Nepali and Hindi. It’s a free text to speech tool that turns your script into natural-sounding audio.</p>
+    <h2>How it works</h2>
+    <p>The voice model downloads once (about 80 MB) and is then cached by your browser. After that, speech is generated on your own device, so your text is never uploaded.</p>
+    <h2>Can I use the audio commercially?</h2>
+    <p>The voices come from the open-source Kokoro model (Apache 2.0 license). You can use the audio in videos, podcasts, and apps.</p>
+    <h2>Why is the first run slow?</h2>
+    <p>The first run downloads the model. Later runs start in seconds. A desktop browser with WebGPU (recent Chrome or Edge) is fastest.</p>
+  </section>
+</main>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const text = $("text"), go = $("go"), stop = $("stop"), statusEl = $("status"),
+      bar = $("bar"), fill = $("fill"), out = $("out"), player = $("player"), dl = $("dl");
+const MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
+let tts = null, cancelled = false, lastUrl = null;
+
+const setStatus = (m, err = false) => { statusEl.textContent = m; statusEl.className = err ? "err" : ""; };
+const setProgress = p => { bar.style.display = "block"; fill.style.width = Math.round(p * 100) + "%"; };
+
+text.addEventListener("input", () => $("count").textContent = text.value.length + " / 10000");
+$("speed").addEventListener("input", e => $("speedVal").textContent = Number(e.target.value).toFixed(2).replace(/0$/, ""));
+text.dispatchEvent(new Event("input"));
+
+// Split into sentence-based chunks so long scripts don't freeze the page
+function chunk(str, max = 280) {
+  const sentences = str.replace(/\s+/g, " ").trim().match(/[^.!?…]+[.!?…]*["”’)]*\s*/g) || [str];
+  const out = []; let cur = "";
+  for (let s of sentences) {
+    while (s.length > max) {            // very long sentence: cut at a comma or space
+      let cut = s.lastIndexOf(",", max); if (cut < 60) cut = s.lastIndexOf(" ", max); if (cut < 1) cut = max;
+      if (cur) { out.push(cur); cur = ""; }
+      out.push(s.slice(0, cut + 1).trim()); s = s.slice(cut + 1);
+    }
+    if ((cur + s).length > max) { out.push(cur); cur = s; } else cur += s;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.map(s => s.trim()).filter(Boolean);
+}
+
+function toWav(parts, rate) {
+  const n = parts.reduce((a, p) => a + p.length, 0);
+  const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, "data"); v.setUint32(40, n * 2, true);
+  let o = 44;
+  for (const p of parts) for (let i = 0; i < p.length; i++, o += 2) {
+    const s = Math.max(-1, Math.min(1, p[i])); v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+async function loadModel() {
+  if (tts) return tts;
+  if (typeof WebAssembly === "undefined") throw new Error("This browser can’t run the voice engine. Try the latest Chrome, Edge, Firefox, or Safari.");
+  setStatus("Loading the voice model. The first time takes a minute, then it’s cached…");
+  const { KokoroTTS } = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm");
+  const progress_callback = p => { if (p.status === "progress" && p.progress != null) setProgress(p.progress / 100); };
+  const tries = [];
+  if (navigator.gpu) tries.push({ dtype: "fp32", device: "webgpu" });
+  tries.push({ dtype: "q8", device: "wasm" });
+  let lastErr;
+  for (const opts of tries) {
+    try { tts = await KokoroTTS.from_pretrained(MODEL, { ...opts, progress_callback }); return tts; }
+    catch (e) { lastErr = e; console.warn("Backend failed:", opts.device, e); }
+  }
+  throw lastErr;
+}
+
+go.addEventListener("click", async () => {
+  const input = text.value.trim();
+  if (!input) { setStatus("Type or paste some text first.", true); text.focus(); return; }
+  cancelled = false; go.disabled = true; stop.hidden = false; out.style.display = "none"; setProgress(0);
+  try {
+    const model = await loadModel();
+    const parts = chunk(input); const pcm = []; let rate = 24000;
+    for (let i = 0; i < parts.length; i++) {
+      if (cancelled) throw new Error("Cancelled.");
+      setStatus(`Generating part ${i + 1} of ${parts.length}…`); setProgress(i / parts.length);
+      const audio = await model.generate(parts[i], { voice: $("voice").value, speed: Number($("speed").value) });
+      pcm.push(audio.audio); rate = audio.sampling_rate;
+      await new Promise(r => setTimeout(r));   // let the UI breathe
+    }
+    const blob = toWav(pcm, rate);
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(blob);
+    player.src = lastUrl; dl.href = lastUrl; out.style.display = "block";
+    setProgress(1); setStatus("Done. Press play or download your audio.");
+    player.play().catch(() => {});
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message === "Cancelled." ? "Cancelled." : "Something went wrong: " + (e.message || "unknown error") + ". Check your connection and try again.", e.message !== "Cancelled.");
+    bar.style.display = "none";
+  } finally { go.disabled = false; stop.hidden = true; }
+});
+stop.addEventListener("click", () => { cancelled = true; });
+</script>
+</body>
+</html>
